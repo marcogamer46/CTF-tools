@@ -1,0 +1,454 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>CTF Toolbelt</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a left rail (search, filters, category list) beside one column of category sections made of tool cards. Stacks to a single column on phones. */
+:root {
+  --bg: #EDF0F4;
+  --surface: #F8FAFC;
+  --ink: #131A24;
+  --muted: #566275;
+  --line: #D3DAE3;
+  --accent: #2450E6;
+  --accent-soft: #DCE5FF;
+  --star: #B7791F;
+  --f-display: "Bricolage Grotesque", "Inter", system-ui, sans-serif;
+  --f-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E131B;
+    --surface: #151C27;
+    --ink: #E6EBF2;
+    --muted: #93A0B3;
+    --line: #263142;
+    --accent: #7D9BFF;
+    --accent-soft: #1C2A4F;
+    --star: #F2B84B;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E131B;
+  --surface: #151C27;
+  --ink: #E6EBF2;
+  --muted: #93A0B3;
+  --line: #263142;
+  --accent: #7D9BFF;
+  --accent-soft: #1C2A4F;
+  --star: #F2B84B;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: 16px;
+  line-height: 1.5;
+  padding-block: 32px 72px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.wrap { max-width: 1180px; margin: 0 auto; }
+
+.top { display: flex; flex-direction: column; gap: 12px; padding-bottom: 28px; }
+.eyebrow { font-family: var(--f-mono); font-size: 13px; letter-spacing: 0.04em; color: var(--accent); margin: 0; }
+h1 {
+  font-family: var(--f-display);
+  font-weight: 700;
+  font-size: clamp(2.25rem, 6vw, 3.75rem);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  margin: 0;
+  text-wrap: balance;
+}
+.lede { max-width: 62ch; margin: 0; color: var(--muted); font-size: 1.0625rem; }
+.stats { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 4px 0 0; font-family: var(--f-mono); font-size: 12.5px; color: var(--muted); }
+.stats b { color: var(--ink); font-weight: 500; font-variant-numeric: tabular-nums; }
+
+.layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; }
+@media (min-width: 900px) {
+  .layout { grid-template-columns: 264px minmax(0, 1fr); gap: 40px; align-items: start; }
+  .rail { position: sticky; top: calc(20px + env(safe-area-inset-top, 0px)); max-height: calc(100vh - 40px); overflow-y: auto; }
+}
+
+.rail { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.field { position: relative; }
+.field input {
+  width: 100%;
+  font: inherit;
+  font-size: 15px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 11px 40px 11px 14px;
+}
+.field input::placeholder { color: var(--muted); }
+.field input:focus-visible { outline: 2px solid var(--accent); outline-offset: 0; border-color: var(--accent); }
+.field kbd {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  font-family: var(--f-mono); font-size: 12px; color: var(--muted);
+  border: 1px solid var(--line); border-radius: 4px; padding: 0 6px; line-height: 20px;
+  pointer-events: none;
+}
+@media (hover: none) { .field kbd { display: none; } }
+
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 3px; gap: 3px; }
+.seg button { font-size: 13.5px; font-weight: 500; color: var(--muted); padding: 7px 4px; border-radius: 6px; }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
+.seg button:hover:not([aria-pressed="true"]) { color: var(--ink); }
+
+.toggle { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 14px; font-weight: 500; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.toggle .n { font-family: var(--f-mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.toggle[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+.toggle[aria-pressed="true"] .n { color: var(--accent); }
+
+.cats { display: flex; flex-wrap: wrap; gap: 6px; }
+.cat { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); font-size: 13.5px; font-weight: 500; }
+.cat .n { font-family: var(--f-mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.cat[aria-pressed="true"] { background: var(--accent-soft); border-color: transparent; color: var(--accent); }
+.cat[aria-pressed="true"] .n { color: var(--accent); }
+.cat:hover:not([aria-pressed="true"]) { border-color: var(--muted); }
+@media (min-width: 900px) {
+  .cats { flex-direction: column; flex-wrap: nowrap; gap: 2px; }
+  .cat { border-radius: 8px; border-color: transparent; background: transparent; justify-content: space-between; padding: 8px 12px; }
+  .cat:hover:not([aria-pressed="true"]) { background: var(--surface); border-color: transparent; }
+}
+
+.pick-btn { font-size: 14px; font-weight: 600; padding: 10px 14px; border-radius: 8px; background: var(--accent); color: var(--bg); text-align: center; }
+.pick-btn:hover { filter: brightness(1.08); }
+.note { margin: 0; font-size: 12.5px; color: var(--muted); }
+
+main { min-width: 0; }
+.summary { margin: 0 0 20px; font-family: var(--f-mono); font-size: 12.5px; color: var(--muted); }
+.results { display: flex; flex-direction: column; gap: 40px; }
+.sec-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin-bottom: 14px; }
+.sec-head h2 { font-family: var(--f-display); font-weight: 600; font-size: 1.5rem; letter-spacing: -0.01em; margin: 0; }
+.sec-head .count { font-family: var(--f-mono); font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.sec-head p { flex-basis: 100%; margin: 0; color: var(--muted); font-size: 14.5px; max-width: 62ch; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+.card { display: flex; flex-direction: column; gap: 8px; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 14px 12px; }
+.card:hover { border-color: var(--accent); }
+.card.picked { outline: 2px solid var(--accent); outline-offset: 3px; }
+.row { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.name { font-family: var(--f-display); font-weight: 600; font-size: 1.0625rem; line-height: 1.25; text-decoration: none; overflow-wrap: anywhere; }
+.name::after { content: " \2197"; font-family: var(--f-mono); font-size: 0.8em; color: var(--muted); }
+.name:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+.desc { margin: 0; font-size: 14px; color: var(--muted); flex: 1; }
+.badge { align-self: flex-start; font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; }
+.badge.web { background: var(--accent-soft); color: var(--accent); }
+.badge.local { border: 1px solid var(--line); color: var(--muted); }
+.star { flex: none; width: 30px; height: 30px; margin: -4px -4px 0 0; display: grid; place-items: center; color: var(--muted); border-radius: 6px; }
+.star svg { fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linejoin: round; }
+.star:hover { color: var(--ink); }
+.star[aria-pressed="true"] { color: var(--star); }
+.star[aria-pressed="true"] svg { fill: currentColor; }
+
+.empty { border: 1px dashed var(--line); border-radius: 8px; padding: 32px 20px; text-align: center; color: var(--muted); }
+.empty p { margin: 0 0 12px; }
+.empty button { color: var(--accent); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .card { transition: border-color 0.15s; }
+}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <p class="eyebrow">flag{toolbelt}</p>
+    <h1>CTF Toolbelt</h1>
+    <p class="lede">A searchable shelf of the tools worth knowing for jeopardy-style CTFs. Browser tools need no setup. Local tools are the ones to install before the next event.</p>
+    <p class="stats" id="stats"></p>
+  </header>
+
+  <div class="layout">
+    <aside class="rail">
+      <div class="field">
+        <label class="sr" for="q">Search tools</label>
+        <input id="q" type="search" placeholder="Search: rsa, stego, burp" autocomplete="off" spellcheck="false">
+        <kbd>/</kbd>
+      </div>
+      <div class="seg" role="group" aria-label="Where the tool runs">
+        <button type="button" data-kind="all" aria-pressed="true">All</button>
+        <button type="button" data-kind="web" aria-pressed="false">Browser</button>
+        <button type="button" data-kind="local" aria-pressed="false">Install</button>
+      </div>
+      <button type="button" class="toggle" id="starOnly" aria-pressed="false"><span>Starred only</span><span class="n" id="starCount">0</span></button>
+      <nav aria-label="Categories"><div class="cats" id="cats"></div></nav>
+      <button type="button" class="pick-btn" id="pick">Pick one for me</button>
+      <p class="note">Stars are saved in this browser only.</p>
+    </aside>
+
+    <main>
+      <p class="summary" id="summary" aria-live="polite"></p>
+      <div class="results" id="results"></div>
+    </main>
+  </div>
+</div>
+
+<script>
+(function () {
+  var CATS = [
+    { id: "crypto", name: "Crypto & encoding", blurb: "Odd-looking strings, classical ciphers, weak RSA and hashes you need to crack or look up." },
+    { id: "forensics", name: "Forensics & stego", blurb: "Hidden data in images, audio, packet captures, disk images and memory dumps." },
+    { id: "re", name: "Reverse & pwn", blurb: "Decompile it, debug it, then build the exploit." },
+    { id: "web", name: "Web", blurb: "Proxies, fuzzers, callback catchers and the cheat sheets you will keep open." },
+    { id: "osint", name: "OSINT", blurb: "Find the person, place or server from public traces." },
+    { id: "ref", name: "Reference", blurb: "Wikis and link collections for when you are stuck on a category." },
+    { id: "practice", name: "Practice & platforms", blurb: "Where to find live events and where to train between them." }
+  ];
+
+  // [category, name, kind (web = runs in browser, local = install), url, description]
+  var RAW = [
+    ["crypto", "CyberChef", "web", "https://gchq.github.io/CyberChef/", "Chain encoders, decoders and crypto operations. Magic mode guesses the encoding for you."],
+    ["crypto", "dCode", "web", "https://www.dcode.fr/", "Solvers for classical ciphers, plus a cipher identifier."],
+    ["crypto", "quipqiup", "web", "https://quipqiup.com/", "Solves substitution ciphers automatically."],
+    ["crypto", "Boxentriq", "web", "https://www.boxentriq.com/code-breaking", "Cipher tools and a cipher type identifier."],
+    ["crypto", "FactorDB", "web", "https://factordb.com/", "Known factorizations. Weak RSA moduli often turn up here."],
+    ["crypto", "CrackStation", "web", "https://crackstation.net/", "Hash lookup against huge wordlists and rainbow tables."],
+    ["crypto", "hashes.com", "web", "https://hashes.com/en/tools/hash_identifier", "Hash lookup and hash type identifier."],
+    ["crypto", "jwt.io", "web", "https://jwt.io/", "Decode and edit JSON Web Tokens."],
+    ["crypto", "RsaCtfTool", "local", "https://github.com/RsaCtfTool/RsaCtfTool", "Automates the common RSA attacks against weak keys."],
+    ["crypto", "Hashcat", "local", "https://hashcat.net/hashcat/", "GPU hash cracking with rules and masks."],
+    ["crypto", "John the Ripper", "local", "https://www.openwall.com/john/", "Password cracking for hashes, archives and key files."],
+
+    ["forensics", "Aperisolve", "web", "https://www.aperisolve.com/", "Runs zsteg, steghide, binwalk, exiftool and more on one image at once."],
+    ["forensics", "FotoForensics", "web", "https://fotoforensics.com/", "Error level analysis and metadata for images."],
+    ["forensics", "Forensically", "web", "https://29a.ch/photo-forensics/", "Clone detection, noise analysis and ELA in the browser."],
+    ["forensics", "StegOnline", "web", "https://georgeom.net/StegOnline/", "Inspect bit planes and extract LSB data from images."],
+    ["forensics", "HexEd.it", "web", "https://hexed.it/", "Hex editor in the browser. Check the magic bytes first."],
+    ["forensics", "Wireshark", "local", "https://www.wireshark.org/", "Read packet captures, follow streams and export objects."],
+    ["forensics", "Autopsy", "local", "https://www.autopsy.com/", "Disk image analysis with a file browser and timeline."],
+    ["forensics", "Volatility 3", "local", "https://github.com/volatilityfoundation/volatility3", "Memory dump analysis: processes, network, files."],
+    ["forensics", "binwalk", "local", "https://github.com/ReFirmLabs/binwalk", "Finds and extracts files hidden inside other files."],
+    ["forensics", "exiftool", "local", "https://exiftool.org/", "Reads metadata from nearly any file type."],
+    ["forensics", "zsteg", "local", "https://github.com/zed-0xff/zsteg", "Detects stego in PNG and BMP files."],
+    ["forensics", "steghide", "local", "https://steghide.sourceforge.net/", "Extracts data hidden in JPEG and WAV files."],
+    ["forensics", "Sonic Visualiser", "local", "https://www.sonicvisualiser.org/", "Spectrograms for audio challenges."],
+    ["forensics", "Audacity", "local", "https://www.audacityteam.org/", "Audio editing, spectrogram view, reversed audio and Morse."],
+
+    ["re", "Dogbolt", "web", "https://dogbolt.org/", "Runs a binary through several decompilers side by side."],
+    ["re", "Compiler Explorer", "web", "https://godbolt.org/", "See the assembly that C and other languages compile to."],
+    ["re", "Online Disassembler", "web", "https://onlinedisassembler.com/", "Quick disassembly without installing anything."],
+    ["re", "shell-storm", "web", "https://shell-storm.org/shellcode/index.html", "Shellcode database by architecture."],
+    ["re", "Ghidra", "local", "https://ghidra-sre.org/", "Free decompiler and reverse engineering suite from the NSA."],
+    ["re", "Cutter", "local", "https://cutter.re/", "GUI for radare2 with the Ghidra decompiler built in."],
+    ["re", "radare2", "local", "https://rada.re/n/", "Command line reversing framework."],
+    ["re", "IDA Free", "local", "https://hex-rays.com/ida-free/", "Free edition of the industry standard disassembler."],
+    ["re", "pwndbg", "local", "https://github.com/pwndbg/pwndbg", "GDB plugin built for exploit development."],
+    ["re", "GEF", "local", "https://github.com/hugsy/gef", "Lighter GDB plugin, a common alternative to pwndbg."],
+    ["re", "pwntools", "local", "https://github.com/Gallopsled/pwntools", "Python library for writing exploit scripts."],
+    ["re", "ROPgadget", "local", "https://github.com/JonathanSalwan/ROPgadget", "Finds ROP gadgets in binaries."],
+    ["re", "Ropper", "local", "https://github.com/sashs/Ropper", "Gadget finder with a chain builder."],
+    ["re", "one_gadget", "local", "https://github.com/david942j/one_gadget", "Finds one-shot execve gadgets in libc."],
+    ["re", "angr", "local", "https://angr.io/", "Symbolic execution, handy for crackmes."],
+
+    ["web", "webhook.site", "web", "https://webhook.site/", "Catch callbacks for SSRF, blind XSS and exfiltration."],
+    ["web", "RequestBin", "web", "https://requestbin.com/", "Another endpoint for inspecting incoming requests."],
+    ["web", "Interactsh", "web", "https://app.interactsh.com/", "Out-of-band interaction server for blind bugs."],
+    ["web", "Revshells", "web", "https://www.revshells.com/", "Reverse shell one-liner generator."],
+    ["web", "regex101", "web", "https://regex101.com/", "Debug regex filters with a step-by-step explanation."],
+    ["web", "CSP Evaluator", "web", "https://csp-evaluator.withgoogle.com/", "Find weaknesses in a Content Security Policy."],
+    ["web", "de4js", "web", "https://lelinhtinh.github.io/de4js/", "Deobfuscate JavaScript."],
+    ["web", "beautifier.io", "web", "https://beautifier.io/", "Beautify minified JS, HTML and CSS."],
+    ["web", "JSFuck", "web", "https://jsfuck.com/", "Recognize JSFuck and JJEncode style JavaScript and reverse it."],
+    ["web", "PayloadsAllTheThings", "web", "https://github.com/swisskyrepo/PayloadsAllTheThings", "Payload and bypass cheat sheets for every bug class."],
+    ["web", "HackTricks", "web", "https://book.hacktricks.xyz/", "Large pentest and CTF technique wiki."],
+    ["web", "GTFOBins", "web", "https://gtfobins.github.io/", "Unix binaries you can abuse for privilege escalation."],
+    ["web", "Burp Suite Community", "local", "https://portswigger.net/burp/communitydownload", "Intercepting proxy for manual web testing."],
+    ["web", "Caido", "local", "https://caido.io/", "Lightweight proxy, an alternative to Burp."],
+    ["web", "sqlmap", "local", "https://sqlmap.org/", "Automatic SQL injection and database takeover."],
+    ["web", "ffuf", "local", "https://github.com/ffuf/ffuf", "Fast web fuzzer for paths, parameters and vhosts."],
+    ["web", "gobuster", "local", "https://github.com/OJ/gobuster", "Directory and DNS brute forcing."],
+    ["web", "dirsearch", "local", "https://github.com/maurosoria/dirsearch", "Path brute forcing with sensible defaults."],
+    ["web", "XSS Hunter Express", "local", "https://github.com/mandatoryprogrammer/xsshunter-express", "Self-hosted blind XSS catcher."],
+
+    ["osint", "Wayback Machine", "web", "https://web.archive.org/", "Old versions of pages, deleted files and removed posts."],
+    ["osint", "Google Hacking Database", "web", "https://www.exploit-db.com/google-hacking-database", "Ready-made Google dorks."],
+    ["osint", "Google Lens", "web", "https://lens.google.com/", "Reverse image search and text extraction."],
+    ["osint", "Yandex Images", "web", "https://yandex.com/images/", "Often better than Google for faces and places."],
+    ["osint", "TinEye", "web", "https://tineye.com/", "Reverse image search that tracks an image's earliest appearance."],
+    ["osint", "Shodan", "web", "https://www.shodan.io/", "Search engine for internet-connected hosts and services."],
+    ["osint", "Censys", "web", "https://censys.com/", "Host and certificate search across the internet."],
+    ["osint", "crt.sh", "web", "https://crt.sh/", "Certificate transparency logs, good for finding subdomains."],
+    ["osint", "DNSDumpster", "web", "https://dnsdumpster.com/", "DNS records and a map of a domain's hosts."],
+    ["osint", "Mapillary", "web", "https://www.mapillary.com/", "Street-level imagery for pinning down locations."],
+    ["osint", "Overpass Turbo", "web", "https://overpass-turbo.eu/", "Query OpenStreetMap for features that match a description."],
+    ["osint", "Hunter.io", "web", "https://hunter.io/", "Find email addresses and patterns for a domain."],
+    ["osint", "Epieos", "web", "https://epieos.com/", "Look up accounts linked to an email address or phone number."],
+    ["osint", "Sherlock", "local", "https://github.com/sherlock-project/sherlock", "Finds a username across hundreds of sites."],
+    ["osint", "Maigret", "local", "https://github.com/soxoj/maigret", "Builds a profile from a username across many sites."],
+
+    ["ref", "CTF101", "web", "https://ctf101.org/", "Beginner guide to every challenge category."],
+    ["ref", "CTF Wiki", "web", "https://ctf-wiki.org/", "In-depth technique notes, strong on pwn and crypto."],
+    ["ref", "ctf-katana", "web", "https://github.com/JohnHammond/ctf-katana", "Command and tool cheat sheet organized by challenge type."],
+    ["ref", "Awesome CTF", "web", "https://github.com/apsdehal/awesome-ctf", "Curated list of CTF tools, books and platforms."],
+    ["ref", "ired.team", "web", "https://www.ired.team/", "Offensive security notes with worked examples."],
+
+    ["practice", "CTFtime", "web", "https://ctftime.org/", "Live event calendar, team rankings and write-ups."],
+    ["practice", "picoCTF", "web", "https://picoctf.org/", "Beginner-friendly challenges that stay online year round."],
+    ["practice", "OverTheWire", "web", "https://overthewire.org/", "Wargames over SSH. Bandit teaches Linux basics."],
+    ["practice", "CryptoHack", "web", "https://cryptohack.org/", "The best place to learn crypto through challenges."],
+    ["practice", "pwn.college", "web", "https://pwn.college/", "Structured pwn and reverse engineering curriculum."],
+    ["practice", "Hack The Box", "web", "https://www.hackthebox.com/", "Machines and challenges across every category."],
+    ["practice", "TryHackMe", "web", "https://tryhackme.com/", "Guided rooms that walk through each technique."],
+    ["practice", "PortSwigger Web Security Academy", "web", "https://portswigger.net/web-security", "Free web security labs from the makers of Burp."],
+    ["practice", "Root-Me", "web", "https://www.root-me.org/", "Large challenge archive in many categories."],
+    ["practice", "HackThisSite", "web", "https://www.hackthissite.org/", "Long-running legal hacking practice site."],
+    ["practice", "Cryptopals", "web", "https://cryptopals.com/", "Hands-on crypto exercises that build real attacks."],
+    ["practice", "Exploit Education", "web", "https://exploit.education/", "Phoenix and other VMs for learning memory corruption."],
+    ["practice", "Nightmare", "web", "https://guyinatuxedo.github.io/", "Binary exploitation course built from real CTF challenges."],
+    ["practice", "VulnHub", "web", "https://www.vulnhub.com/", "Downloadable vulnerable VMs to attack offline."],
+    ["practice", "pwnable.kr", "web", "https://pwnable.kr/", "Pwn challenges ordered by difficulty."],
+    ["practice", "pwnable.tw", "web", "https://pwnable.tw/", "Harder pwn challenges with a scoreboard."],
+    ["practice", "ROP Emporium", "web", "https://ropemporium.com/", "Focused practice on return-oriented programming."],
+    ["practice", "CTFlearn", "web", "https://ctflearn.com/", "Community-written beginner challenges."]
+  ];
+
+  function slug(s) { return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+
+  var catName = {};
+  CATS.forEach(function (c) { catName[c.id] = c.name; });
+  var TOOLS = RAW.map(function (r) { return { cat: r[0], name: r[1], kind: r[2], url: r[3], desc: r[4], id: slug(r[1]) }; });
+
+  var STORE_KEY = "ctf-toolbelt-stars";
+  var stars = new Set();
+  try { JSON.parse(localStorage.getItem(STORE_KEY) || "[]").forEach(function (id) { stars.add(id); }); } catch (e) {}
+  function saveStars() { try { localStorage.setItem(STORE_KEY, JSON.stringify(Array.from(stars))); } catch (e) {} }
+
+  var state = { q: "", cat: "all", kind: "all", starOnly: false };
+
+  var $q = document.getElementById("q");
+  var $cats = document.getElementById("cats");
+  var $results = document.getElementById("results");
+  var $summary = document.getElementById("summary");
+  var $starCount = document.getElementById("starCount");
+  var $starOnly = document.getElementById("starOnly");
+
+  var webCount = TOOLS.filter(function (t) { return t.kind === "web"; }).length;
+  document.getElementById("stats").innerHTML =
+    "<span><b>" + TOOLS.length + "</b> tools</span>" +
+    "<span><b>" + webCount + "</b> in the browser</span>" +
+    "<span><b>" + (TOOLS.length - webCount) + "</b> to install</span>" +
+    "<span><b>" + CATS.length + "</b> categories</span>";
+
+  function matches(t) {
+    if (state.kind !== "all" && t.kind !== state.kind) return false;
+    if (state.starOnly && !stars.has(t.id)) return false;
+    var terms = state.q.toLowerCase().split(/\s+/).filter(Boolean);
+    if (!terms.length) return true;
+    var hay = (t.name + " " + t.desc + " " + catName[t.cat] + " " + (t.kind === "web" ? "browser online" : "local install")).toLowerCase();
+    return terms.every(function (w) { return hay.indexOf(w) !== -1; });
+  }
+
+  var STAR_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.8L12 3.5z"/></svg>';
+
+  function cardHTML(t) {
+    var on = stars.has(t.id);
+    return '<article class="card" id="t-' + t.id + '">' +
+      '<div class="row"><a class="name" href="' + esc(t.url) + '" target="_blank" rel="noopener noreferrer">' + esc(t.name) + '</a>' +
+      '<button type="button" class="star" data-id="' + t.id + '" aria-pressed="' + on + '" aria-label="' + (on ? "Unstar " : "Star ") + esc(t.name) + '">' + STAR_SVG + '</button></div>' +
+      '<p class="desc">' + esc(t.desc) + '</p>' +
+      '<span class="badge ' + t.kind + '">' + (t.kind === "web" ? "Browser" : "Install") + '</span></article>';
+  }
+
+  function render() {
+    var base = TOOLS.filter(matches);
+    var counts = {};
+    base.forEach(function (t) { counts[t.cat] = (counts[t.cat] || 0) + 1; });
+
+    var catHTML = '<button type="button" class="cat" data-cat="all" aria-pressed="' + (state.cat === "all") + '">All<span class="n">' + base.length + '</span></button>';
+    CATS.forEach(function (c) {
+      catHTML += '<button type="button" class="cat" data-cat="' + c.id + '" aria-pressed="' + (state.cat === c.id) + '">' + esc(c.name) + '<span class="n">' + (counts[c.id] || 0) + '</span></button>';
+    });
+    $cats.innerHTML = catHTML;
+
+    var shown = state.cat === "all" ? base : base.filter(function (t) { return t.cat === state.cat; });
+    var html = "";
+    CATS.forEach(function (c) {
+      var items = shown.filter(function (t) { return t.cat === c.id; });
+      if (!items.length) return;
+      html += '<section aria-labelledby="h-' + c.id + '"><div class="sec-head"><h2 id="h-' + c.id + '">' + esc(c.name) + '</h2><span class="count">' + items.length + (items.length === 1 ? " tool" : " tools") + '</span><p>' + esc(c.blurb) + '</p></div><div class="grid">' + items.map(cardHTML).join("") + '</div></section>';
+    });
+    if (!shown.length) {
+      html = '<div class="empty"><p>No tools match these filters.</p><button type="button" id="reset">Reset filters</button></div>';
+    }
+    $results.innerHTML = html;
+    $summary.textContent = "Showing " + shown.length + " of " + TOOLS.length + " tools";
+    $starCount.textContent = stars.size;
+    $starOnly.setAttribute("aria-pressed", state.starOnly);
+    document.querySelectorAll(".seg button").forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-kind") === state.kind); });
+  }
+
+  $q.addEventListener("input", function () { state.q = $q.value; render(); });
+  $q.addEventListener("keydown", function (e) { if (e.key === "Escape") { $q.value = ""; state.q = ""; render(); } });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "/" && document.activeElement !== $q && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) {
+      e.preventDefault(); $q.focus(); $q.select();
+    }
+  });
+
+  document.querySelector(".seg").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-kind]");
+    if (!b) return;
+    state.kind = b.getAttribute("data-kind");
+    render();
+  });
+  $starOnly.addEventListener("click", function () { state.starOnly = !state.starOnly; render(); });
+  $cats.addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-cat]");
+    if (!b) return;
+    state.cat = b.getAttribute("data-cat");
+    render();
+  });
+
+  $results.addEventListener("click", function (e) {
+    var reset = e.target.closest("#reset");
+    if (reset) {
+      state = { q: "", cat: "all", kind: "all", starOnly: false };
+      $q.value = "";
+      render();
+      return;
+    }
+    var s = e.target.closest("button.star");
+    if (!s) return;
+    var id = s.getAttribute("data-id");
+    if (stars.has(id)) stars.delete(id); else stars.add(id);
+    saveStars();
+    if (state.starOnly) { render(); return; }
+    var on = stars.has(id);
+    var tool = TOOLS.filter(function (t) { return t.id === id; })[0];
+    s.setAttribute("aria-pressed", on);
+    s.setAttribute("aria-label", (on ? "Unstar " : "Star ") + tool.name);
+    $starCount.textContent = stars.size;
+  });
+
+  document.getElementById("pick").addEventListener("click", function () {
+    var pool = Array.prototype.slice.call($results.querySelectorAll(".card"));
+    if (!pool.length) return;
+    var prev = $results.querySelector(".picked");
+    if (prev) prev.classList.remove("picked");
+    var el = pool[Math.floor(Math.random() * pool.length)];
+    el.classList.add("picked");
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    el.scrollIntoView({ block: "center", behavior: reduce ? "auto" : "smooth" });
+    setTimeout(function () { el.classList.remove("picked"); }, 3000);
+  });
+
+  render();
+})();
+</script>
+
+</body></html>
